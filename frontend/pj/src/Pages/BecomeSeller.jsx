@@ -20,7 +20,7 @@ const BecomeSeller = () => {
     setUpdating(true);
     try {
       const res = await fetch("http://localhost:8080/api/auth/become-seller", {
-        method: "PUT",
+        method: "POST",
         credentials: "include",
       });
       const data = await res.json();

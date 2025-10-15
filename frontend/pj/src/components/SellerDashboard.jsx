@@ -1,6 +1,8 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext.jsx";
 import RoomCard from "./RoomCard.jsx";
+import Loader from "./Loader.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
 
 const SellerDashboard = () => {
   const { user, loading } = useContext(AuthContext);
@@ -14,6 +16,9 @@ const SellerDashboard = () => {
     images: [null, null, null, null, null],
   });
   const [editingRoomId, setEditingRoomId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [modal, setModal] = useState({ open: false, title: "", message: "", type: "success" });
+  const [roomToDelete, setRoomToDelete] = useState(null); // 🔹 Track room for deletion
 
   // ----------------- API FUNCTIONS -----------------
   const fetchRooms = async () => {
@@ -29,11 +34,8 @@ const SellerDashboard = () => {
   const handleRoomAPI = async (method, id = "") => {
     const dataForm = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
-      if (key === "images") {
-        value.forEach((file) => file && dataForm.append("images", file));
-      } else {
-        dataForm.append(key, value);
-      }
+      if (key === "images") value.forEach((file) => { if (file instanceof File) dataForm.append("images", file); });
+      else dataForm.append(key, value);
     });
 
     const res = await fetch(`http://localhost:8080/api/rooms${id ? `/${id}` : ""}`, {
@@ -67,55 +69,100 @@ const SellerDashboard = () => {
     setFormData({ ...formData, images: newImages });
   };
 
+  // ----------------- ADD / UPDATE -----------------
   const handleAddRoom = async (e) => {
     e.preventDefault();
-    const data = await handleRoomAPI("POST");
-    if (data?.success) {
-      setFormData({ hotelName: "", location: "", roomType: "", price: "", available: true, images: [null, null, null, null, null] });
-      fetchRooms();
-    } else console.error("Add Room Failed:", data?.message);
+    if (formData.images.some((img) => !img)) {
+      setModal({ open: true, title: "Upload Error", message: "Please upload all 5 images before submitting.", type: "error" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const data = await handleRoomAPI("POST");
+      if (data?.success) {
+        setFormData({ hotelName: "", location: "", roomType: "", price: "", available: true, images: [null, null, null, null, null] });
+        fetchRooms();
+        setModal({ open: true, title: "Room Added", message: "Room added successfully!", type: "success" });
+      } else setModal({ open: true, title: "Add Failed", message: data?.message || "Failed to add room.", type: "error" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleUpdateRoom = async (e) => {
     e.preventDefault();
-    const data = await handleRoomAPI("PUT", editingRoomId);
-    if (data?.success) {
-      setFormData({ hotelName: "", location: "", roomType: "", price: "", available: true, images: [null, null, null, null, null] });
-      setEditingRoomId(null);
-      fetchRooms();
-    } else console.error("Update Room Failed:", data?.message);
+    if (formData.images.some((img) => !img)) {
+      setModal({ open: true, title: "Upload Error", message: "Please upload all 5 images before updating.", type: "error" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const data = await handleRoomAPI("PUT", editingRoomId);
+      if (data?.success) {
+        setFormData({ hotelName: "", location: "", roomType: "", price: "", available: true, images: [null, null, null, null, null] });
+        setEditingRoomId(null);
+        fetchRooms();
+        setModal({ open: true, title: "Room Updated", message: "Room updated successfully!", type: "success" });
+      } else setModal({ open: true, title: "Update Failed", message: data?.message || "Failed to update room.", type: "error" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleEdit = (room) => {
+    const existingImages = room.images && room.images.length > 0 ? [...room.images] : [];
+    while (existingImages.length < 5) existingImages.push(null);
+
     setFormData({
       hotelName: room.hotelName,
       location: room.location,
       roomType: room.roomType,
       price: room.price,
       available: room.available,
-      images: [null, null, null, null, null],
+      images: existingImages,
     });
     setEditingRoomId(room.id);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure to delete this room?")) return;
-    const data = await deleteRoomAPI(id);
-    if (data?.success) fetchRooms();
+  // 🔹 Open modal for delete confirmation
+  const handleDelete = (id) => {
+    setRoomToDelete(id);
+    setModal({
+      open: true,
+      title: "Confirm Delete",
+      message: "Are you sure you want to delete this room?",
+      type: "error",
+    });
+  };
+
+  // 🔹 Confirm deletion
+  const confirmDelete = async () => {
+    if (!roomToDelete) return;
+    setSubmitting(true);
+    setModal({ ...modal, open: false });
+    try {
+      const data = await deleteRoomAPI(roomToDelete);
+      if (data?.success) fetchRooms();
+    } finally {
+      setSubmitting(false);
+      setRoomToDelete(null);
+    }
   };
 
   useEffect(() => {
     if (!loading && user?.role === "SELLER") fetchRooms();
   }, [loading, user]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <Loader />;
   if (!user || user.role !== "SELLER") return <p>Access denied</p>;
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
+    <div className="max-w-5xl mx-auto p-4 relative">
+      {submitting && <Loader />}
+
       <h2 className="text-2xl font-bold mb-4 text-center">Seller Dashboard</h2>
 
-      {/* ------------- FORM ------------- */}
+      {/* ---------------- FORM ---------------- */}
       <form onSubmit={editingRoomId ? handleUpdateRoom : handleAddRoom} className="bg-white p-4 rounded shadow mb-6">
         <h3 className="text-xl font-semibold mb-2">{editingRoomId ? "Edit Room" : "Add Room"}</h3>
         <input type="text" name="hotelName" value={formData.hotelName} onChange={handleChange} placeholder="Hotel Name" required className="border p-2 w-full mb-2 rounded" />
@@ -132,12 +179,15 @@ const SellerDashboard = () => {
           <input type="checkbox" name="available" checked={formData.available} onChange={handleChange} className="mr-2" /> Available
         </label>
 
-        {/* ------------- IMAGE UPLOADS ------------- */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-2">
           {formData.images.map((file, idx) => (
-            <label key={idx} className="w-full h-24 border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer hover:border-blue-500 transition">
+            <label key={idx} className="w-full h-24 border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer hover:border-blue-500 transition relative">
               {file ? (
-                <img src={URL.createObjectURL(file)} alt={`Room ${idx + 1}`} className="object-cover w-full h-full rounded" />
+                <img
+                  src={file instanceof File ? URL.createObjectURL(file) : file}
+                  alt={`Room ${idx + 1}`}
+                  className="object-cover w-full h-full rounded"
+                />
               ) : (
                 <span className="text-gray-400">+ Image {idx + 1}</span>
               )}
@@ -146,10 +196,12 @@ const SellerDashboard = () => {
           ))}
         </div>
 
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">{editingRoomId ? "Update Room" : "Add Room"}</button>
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+          {editingRoomId ? "Update Room" : "Add Room"}
+        </button>
       </form>
 
-      {/* ------------- ROOMS GRID ------------- */}
+      {/* ---------------- ROOMS GRID ---------------- */}
       <h3 className="text-xl font-semibold mb-2">Your Rooms</h3>
       {rooms.length === 0 && <p>No rooms added yet.</p>}
       <div className="grid md:grid-cols-2 gap-4">
@@ -157,6 +209,16 @@ const SellerDashboard = () => {
           <RoomCard key={room.id} room={room} onEdit={handleEdit} onDelete={handleDelete} />
         ))}
       </div>
+
+      {/* ---------------- CONFIRM MODAL ---------------- */}
+      <ConfirmModal
+        isOpen={modal.open}
+        onClose={() => setModal({ ...modal, open: false, title: "", message: "" })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        onConfirm={confirmDelete} // 🔹 Only called when user clicks OK
+      />
     </div>
   );
 };

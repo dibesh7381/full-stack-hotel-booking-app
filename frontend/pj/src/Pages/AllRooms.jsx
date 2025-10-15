@@ -1,5 +1,4 @@
 
-
 import { useEffect, useState, useContext, useRef } from "react";
 import { AuthContext } from "../contexts/AuthContext.jsx";
 import { FaMapMarkerAlt, FaBed, FaCalendarAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";

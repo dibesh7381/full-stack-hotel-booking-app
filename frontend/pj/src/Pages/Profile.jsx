@@ -1,93 +1,106 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
+import Loader from "../components/Loader";
+import ConfirmModal from "../components/ConfirmModal";
 
 const Profile = () => {
   const { user, setUser, fetchProfile, loading: authLoading } = useContext(AuthContext);
-  const [profile, setProfile] = useState({ name: "", email: "" });
+  const [profile, setProfile] = useState({ name: "", email: "", image: null });
+  const [imageFile, setImageFile] = useState(null);
   const [password, setPassword] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [modal, setModal] = useState({ open: false, title: "", message: "", type: "success" });
 
-  // 🔹 Fetch profile if not already loaded
   useEffect(() => {
-    const loadProfile = async () => {
-      if (!user) {
-        try {
-          await fetchProfile();
-        } catch (err) {
-          console.error("❌ Error loading profile:", err);
-        }
-      }
-    };
-    loadProfile();
+    if (!user) fetchProfile();
+    else setProfile(user);
   }, [user, fetchProfile]);
 
-  // 🔹 Sync profile state with context user
-  useEffect(() => {
-    if (user) setProfile({ name: user.name || "", email: user.email || "" });
-  }, [user]);
-
-  // ✅ Update profile function
-  const updateProfile = async () => {
-    if (!profile.name.trim()) return alert("Name cannot be empty");
-
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
     setUpdating(true);
     try {
+      const formData = new FormData();
+      formData.append("name", profile.name);
+      if (password.trim()) formData.append("password", password);
+      if (imageFile) formData.append("image", imageFile);
+
       const res = await fetch("http://localhost:8080/api/auth/profile", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name: profile.name, password }),
+        body: formData,
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Error updating profile");
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to update profile");
 
-      alert("✅ Profile updated successfully");
+      const updatedUser = data.data;
+      const updatedImage = updatedUser.image ? `${updatedUser.image}?v=${Date.now()}` : null;
+
+      setUser((prev) => ({ ...prev, name: updatedUser.name, image: updatedImage }));
+      setProfile((prev) => ({ ...prev, name: updatedUser.name, image: updatedImage }));
       setPassword("");
+      setImageFile(null);
 
-      // Update context user immediately
-      setUser(prev => ({ ...prev, name: profile.name }));
+      setModal({ open: true, title: "Profile Updated", message: "Your profile was updated successfully!", type: "success" });
     } catch (err) {
-      alert(`❌ ${err.message}`);
+      console.error(err);
+      setModal({ open: true, title: "Update Failed", message: err.message, type: "error" });
     } finally {
       setUpdating(false);
     }
   };
 
-  if (authLoading) return <p className="text-center mt-10">Checking login...</p>;
-  if (!user) return <p className="text-center mt-10">Please login to see your profile.</p>;
+  const renderProfileImage = () => {
+    const displayImage = profile.image ? profile.image : null;
 
-  // 🔹 Role-based message styles
-  const roleMessage = () => {
-    if (user.role === "CUSTOMER") {
+    if (displayImage) {
       return (
-        <div className="bg-green-100 text-green-800 p-3 rounded-lg mb-4 text-center font-semibold">
-          🎉 Congratulations, valued Customer!
-        </div>
-      );
-    } else if (user.role === "SELLER") {
-      return (
-        <div className="bg-blue-100 text-blue-800 p-3 rounded-lg mb-4 text-center font-semibold">
-          🚀 Welcome, esteemed Seller!
-        </div>
+        <img
+          key={displayImage}
+          src={displayImage}
+          alt="Profile"
+          className="w-24 h-24 rounded-full object-cover border-2 border-blue-500 shadow-md"
+        />
       );
     }
-    return null;
+
+    const initial = profile.name?.charAt(0).toUpperCase() || "?";
+    return (
+      <div className="w-24 h-24 rounded-full bg-blue-500 text-white flex items-center justify-center text-3xl font-bold shadow-md">
+        {initial}
+      </div>
+    );
   };
 
+  if (authLoading) return <Loader />;
+
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-lg rounded-2xl">
-      <h2 className="text-2xl font-bold mb-6 text-center">Profile</h2>
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg relative">
+      {updating && <Loader />}
+      
+      <h2 className="text-2xl font-bold text-center mb-6">My Profile</h2>
 
-      {/* 🔹 Role-based congratulation message */}
-      {roleMessage()}
+      <div className="flex flex-col items-center space-y-3 mb-4">
+        {renderProfileImage()}
+        <label className="cursor-pointer text-blue-600 hover:underline">
+          Change Photo
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => setImageFile(e.target.files[0])}
+          />
+        </label>
+      </div>
 
-      <div className="space-y-4">
+      <form onSubmit={handleProfileUpdate} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Email</label>
           <input
-            value={profile.email}
-            disabled
+            type="email"
+            value={profile.email || ""}
+            readOnly
             className="w-full p-2 border rounded bg-gray-100"
           />
         </div>
@@ -95,9 +108,11 @@ const Profile = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700">Name</label>
           <input
-            value={profile.name}
-            onChange={e => setProfile({ ...profile, name: e.target.value })}
+            type="text"
+            value={profile.name || ""}
+            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
             className="w-full p-2 border rounded"
+            required
           />
         </div>
 
@@ -107,22 +122,29 @@ const Profile = () => {
             type="password"
             placeholder="Enter new password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
 
         <button
-          onClick={updateProfile}
+          type="submit"
           disabled={updating}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded mt-4 transition"
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded transition disabled:opacity-50"
         >
-          {updating ? "Updating..." : "Update Profile"}
+          Update Profile
         </button>
-      </div>
+      </form>
+
+      <ConfirmModal
+        isOpen={modal.open}
+        onClose={() => setModal({ ...modal, open: false })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
     </div>
   );
 };
 
 export default Profile;
-
