@@ -113,7 +113,7 @@ const SellerDashboard = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Seller Dashboard</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">Seller Dashboard</h2>
 
       {/* ------------- FORM ------------- */}
       <form onSubmit={editingRoomId ? handleUpdateRoom : handleAddRoom} className="bg-white p-4 rounded shadow mb-6">

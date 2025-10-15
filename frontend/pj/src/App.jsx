@@ -7,6 +7,7 @@ import Profile from "./Pages/Profile";
 import About from "./Pages/About";
 import BecomeSeller from "./Pages/BecomeSeller";
 import SellerDashboard from "./components/SellerDashboard";
+import AllRooms from "./Pages/AllRooms"; // ✅ import added
 
 function App() {
   return (
@@ -19,7 +20,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/become-seller" element={<BecomeSeller />} />
-        <Route path="/seller-dashboard" element={<SellerDashboard />} /> {/* ✅ Seller Dashboard */}
+        <Route path="/seller-dashboard" element={<SellerDashboard />} />
+        <Route path="/all-rooms" element={<AllRooms />} /> {/* ✅ Added */}
       </Routes>
     </>
   );

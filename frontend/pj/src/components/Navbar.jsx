@@ -37,6 +37,12 @@ const Navbar = () => {
                 About
               </Link>
 
+              {!loading && user && (
+                <Link to="/all-rooms" className="hover:text-gray-200 transition">
+                  All Rooms
+                </Link>
+              )}
+
               {!loading && !user && (
                 <>
                   <Link to="/signup" className="hover:text-gray-200 transition">
@@ -55,12 +61,18 @@ const Navbar = () => {
                   </Link>
 
                   {user.role === "SELLER" && (
-                    <Link to="/seller-dashboard" className="hover:text-gray-200 transition">
+                    <Link
+                      to="/seller-dashboard"
+                      className="hover:text-gray-200 transition"
+                    >
                       Seller Dashboard
                     </Link>
                   )}
 
-                  <Link to="/become-seller" className="hover:text-gray-200 transition">
+                  <Link
+                    to="/become-seller"
+                    className="hover:text-gray-200 transition"
+                  >
                     Become Seller
                   </Link>
 
@@ -74,6 +86,7 @@ const Navbar = () => {
               )}
             </div>
 
+            {/* Mobile menu button */}
             <div className="md:hidden flex items-center">
               <button
                 onClick={() => setIsOpen(!isOpen)}
@@ -88,24 +101,50 @@ const Navbar = () => {
 
       {/* Mobile Slide Menu */}
       <div
-        className={`fixed top-0 right-0 h-full w-64 bg-blue-700 transform ${
+        className={`fixed top-5 right-0 h-full w-64 bg-blue-700 transform ${
           isOpen ? "translate-x-0" : "translate-x-full"
         } transition-transform duration-300 ease-in-out z-40 shadow-lg`}
       >
         <div className="flex flex-col mt-16 space-y-6 px-6">
-          <Link to="/" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">
+          <Link
+            to="/"
+            onClick={() => setIsOpen(false)}
+            className="hover:text-gray-200 transition text-lg"
+          >
             Home
           </Link>
-          <Link to="/about" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">
+          <Link
+            to="/about"
+            onClick={() => setIsOpen(false)}
+            className="hover:text-gray-200 transition text-lg"
+          >
             About
           </Link>
 
+          {!loading && user && (
+            <Link
+              to="/all-rooms"
+              onClick={() => setIsOpen(false)}
+              className="hover:text-gray-200 transition text-lg"
+            >
+              All Rooms
+            </Link>
+          )}
+
           {!loading && !user && (
             <>
-              <Link to="/signup" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">
+              <Link
+                to="/signup"
+                onClick={() => setIsOpen(false)}
+                className="hover:text-gray-200 transition text-lg"
+              >
                 Sign Up
               </Link>
-              <Link to="/login" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">
+              <Link
+                to="/login"
+                onClick={() => setIsOpen(false)}
+                className="hover:text-gray-200 transition text-lg"
+              >
                 Login
               </Link>
             </>
@@ -113,17 +152,29 @@ const Navbar = () => {
 
           {!loading && user && (
             <>
-              <Link to="/profile" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">
+              <Link
+                to="/profile"
+                onClick={() => setIsOpen(false)}
+                className="hover:text-gray-200 transition text-lg"
+              >
                 Profile
               </Link>
 
               {user.role === "SELLER" && (
-                <Link to="/seller-dashboard" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">
+                <Link
+                  to="/seller-dashboard"
+                  onClick={() => setIsOpen(false)}
+                  className="hover:text-gray-200 transition text-lg"
+                >
                   Seller Dashboard
                 </Link>
               )}
 
-              <Link to="/become-seller" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">
+              <Link
+                to="/become-seller"
+                onClick={() => setIsOpen(false)}
+                className="hover:text-gray-200 transition text-lg"
+              >
                 Become Seller
               </Link>
 
@@ -138,7 +189,13 @@ const Navbar = () => {
         </div>
       </div>
 
-      {isOpen && <div onClick={() => setIsOpen(false)} className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden"></div>}
+      {/* Overlay */}
+      {isOpen && (
+        <div
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden"
+        ></div>
+      )}
 
       <div className="h-16 md:h-16"></div>
     </>

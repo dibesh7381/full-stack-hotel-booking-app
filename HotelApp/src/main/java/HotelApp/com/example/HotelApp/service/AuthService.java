@@ -159,4 +159,25 @@ public class AuthService {
         dto.setSellerId(room.getSellerId());
         return dto;
     }
+
+    public List<RoomResponseDTO> getAllRooms() {
+        List<Room> rooms = roomRepository.findAll();
+
+        return rooms.stream()
+                .map(room -> {
+                    RoomResponseDTO dto = new RoomResponseDTO();
+                    dto.setId(room.getId());
+                    dto.setHotelName(room.getHotelName());
+                    dto.setLocation(room.getLocation());
+                    dto.setRoomType(room.getRoomType());
+                    dto.setPrice(room.getPrice());
+                    dto.setAvailable(room.getAvailable() != null ? room.getAvailable() : false);
+                    dto.setImages(room.getImages());
+                    dto.setSellerId(room.getSellerId()); // direct string
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+
 }

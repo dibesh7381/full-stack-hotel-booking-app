@@ -260,6 +260,23 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/all-rooms")
+    public ResponseEntity<ApiResponseDTO<List<RoomResponseDTO>>> getAllRooms(HttpServletRequest request) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+
+            List<RoomResponseDTO> allRooms = authService.getAllRooms();
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "All rooms fetched successfully", allRooms));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to fetch all rooms: " + e.getMessage(), null));
+        }
+    }
+
     // ------------------- HELPER -------------------
     private String extractTokenFromCookies(HttpServletRequest request) {
         if (request.getCookies() != null) {
