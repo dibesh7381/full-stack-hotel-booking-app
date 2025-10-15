@@ -28,7 +28,7 @@ public class AuthService {
 
     // -------------------- USER METHODS --------------------
     public UserResponseDTO register(UserRequestDTO dto) {
-        if(userRepository.existsByEmail(dto.getEmail()))
+        if (userRepository.existsByEmail(dto.getEmail()))
             throw new RuntimeException("Email already exists");
 
         User user = new User();
@@ -39,14 +39,14 @@ public class AuthService {
 
         userRepository.save(user);
 
-        return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole());
+        return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getImage());
     }
 
     public String login(LoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
-        if(!passwordEncoder.matches(dto.getPassword(), user.getPassword()))
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword()))
             throw new RuntimeException("Invalid email or password");
 
         return jwtUtils.generateToken(user.getId());
@@ -55,18 +55,42 @@ public class AuthService {
     public UserResponseDTO getProfile(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole());
+        return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getImage());
     }
 
+    // ✅ UPDATED METHOD — handles name, password & image upload
     public UserResponseDTO updateProfile(String userId, ProfileUpdateDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Update name
         user.setName(dto.getName());
-        if(dto.getPassword() != null && !dto.getPassword().isEmpty()) {
+
+        // Update password if provided
+        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
+
+        // ✅ Handle image upload if provided
+        if (dto.getImage() != null && !dto.getImage().isEmpty()) {
+            try {
+                Map uploadResult = cloudinary.uploader().upload(dto.getImage(), ObjectUtils.emptyMap());
+                String imageUrl = uploadResult.get("secure_url").toString();
+                user.setImage(imageUrl);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to upload image: " + e.getMessage());
+            }
+        }
+
         userRepository.save(user);
-        return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole());
+
+        return new UserResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getImage()
+        );
     }
 
     public UserResponseDTO updateRoleToSeller(String userId) {
@@ -76,7 +100,7 @@ public class AuthService {
             user.setRole("SELLER");
             userRepository.save(user);
         }
-        return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole());
+        return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getImage());
     }
 
     // -------------------- ROOM METHODS --------------------
@@ -115,7 +139,7 @@ public class AuthService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        if(!room.getSellerId().equals(sellerId)) throw new RuntimeException("Unauthorized");
+        if (!room.getSellerId().equals(sellerId)) throw new RuntimeException("Unauthorized");
 
         room.setHotelName(dto.getHotelName());
         room.setLocation(dto.getLocation());
@@ -124,7 +148,7 @@ public class AuthService {
         room.setAvailable(dto.getAvailable());
 
         // Upload new images if provided
-        if(dto.getImages() != null && !dto.getImages().isEmpty()) {
+        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
             List<String> uploadedUrls = dto.getImages().stream().map(img -> {
                 try {
                     Map uploadResult = cloudinary.uploader().upload(img, ObjectUtils.emptyMap());
@@ -143,7 +167,7 @@ public class AuthService {
     public void deleteRoom(String roomId, String sellerId) {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
-        if(!room.getSellerId().equals(sellerId)) throw new RuntimeException("Unauthorized");
+        if (!room.getSellerId().equals(sellerId)) throw new RuntimeException("Unauthorized");
         roomRepository.delete(room);
     }
 
@@ -173,11 +197,10 @@ public class AuthService {
                     dto.setPrice(room.getPrice());
                     dto.setAvailable(room.getAvailable() != null ? room.getAvailable() : false);
                     dto.setImages(room.getImages());
-                    dto.setSellerId(room.getSellerId()); // direct string
+                    dto.setSellerId(room.getSellerId());
                     return dto;
                 })
                 .collect(Collectors.toList());
     }
-
-
 }
+

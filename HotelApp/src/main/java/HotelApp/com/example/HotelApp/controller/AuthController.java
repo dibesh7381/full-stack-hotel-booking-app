@@ -2,8 +2,8 @@ package HotelApp.com.example.HotelApp.controller;
 
 import HotelApp.com.example.HotelApp.config.CloudinaryConfig;
 import HotelApp.com.example.HotelApp.dto.*;
-import HotelApp.com.example.HotelApp.service.AuthService;
 import HotelApp.com.example.HotelApp.security.JwtUtils;
+import HotelApp.com.example.HotelApp.service.AuthService;
 import com.cloudinary.Cloudinary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -57,8 +57,9 @@ public class AuthController {
     public ResponseEntity<ApiResponseDTO<?>> getProfile(HttpServletRequest request) {
         try {
             String token = extractTokenFromCookies(request);
-            if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponseDTO<>(false, "Missing token cookie", null));
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token cookie", null));
 
             String userId = jwtUtils.getUserIdFromToken(token);
             UserResponseDTO user = authService.getProfile(userId);
@@ -70,23 +71,38 @@ public class AuthController {
         }
     }
 
-    // ------------------- UPDATE PROFILE -------------------
+    // ------------------- UPDATE PROFILE (with optional image) -------------------
     @PutMapping("/auth/profile")
     public ResponseEntity<ApiResponseDTO<?>> updateProfile(
             HttpServletRequest request,
-            @RequestBody ProfileUpdateDTO dto) {
+            @RequestParam("name") String name,
+            @RequestParam(value = "password", required = false) String password,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
+
         try {
             String token = extractTokenFromCookies(request);
-            if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponseDTO<>(false, "Missing token cookie", null));
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token cookie", null));
 
             String userId = jwtUtils.getUserIdFromToken(token);
-            UserResponseDTO user = authService.updateProfile(userId, dto);
-            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Profile updated successfully", user));
+
+            String imageUrl = null;
+            if (image != null && !image.isEmpty()) {
+                imageUrl = cloudinaryConfig.uploadFile(cloudinary, image);
+            }
+
+            ProfileUpdateDTO dto = new ProfileUpdateDTO();
+            dto.setName(name);
+            dto.setPassword(password);
+            dto.setImage(imageUrl);
+
+            UserResponseDTO updatedUser = authService.updateProfile(userId, dto);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Profile updated successfully", updatedUser));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponseDTO<>(false, "Invalid or expired token: " + e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to update profile: " + e.getMessage(), null));
         }
     }
 
@@ -118,8 +134,9 @@ public class AuthController {
     public ResponseEntity<ApiResponseDTO<?>> becomeSeller(HttpServletRequest request) {
         try {
             String token = extractTokenFromCookies(request);
-            if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponseDTO<>(false, "Missing token cookie", null));
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token cookie", null));
 
             String userId = jwtUtils.getUserIdFromToken(token);
             UserResponseDTO user = authService.updateRoleToSeller(userId);
@@ -289,3 +306,4 @@ public class AuthController {
         return null;
     }
 }
+
