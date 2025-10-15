@@ -1,0 +1,274 @@
+package HotelApp.com.example.HotelApp.controller;
+
+import HotelApp.com.example.HotelApp.config.CloudinaryConfig;
+import HotelApp.com.example.HotelApp.dto.*;
+import HotelApp.com.example.HotelApp.service.AuthService;
+import HotelApp.com.example.HotelApp.security.JwtUtils;
+import com.cloudinary.Cloudinary;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class AuthController {
+
+    private final AuthService authService;
+    private final JwtUtils jwtUtils;
+    private final CloudinaryConfig cloudinaryConfig;
+    private final Cloudinary cloudinary; // Inject Cloudinary bean
+
+    // ------------------- SIGNUP -------------------
+    @PostMapping("/auth/register")
+    public ResponseEntity<ApiResponseDTO<UserResponseDTO>> register(@Validated @RequestBody UserRequestDTO dto) {
+        UserResponseDTO user = authService.register(dto);
+        return ResponseEntity.ok(new ApiResponseDTO<>(true, "Registration successful", user));
+    }
+
+    // ------------------- LOGIN -------------------
+    @PostMapping("/auth/login")
+    public ResponseEntity<ApiResponseDTO<String>> login(
+            @Validated @RequestBody LoginRequestDTO dto,
+            HttpServletResponse response) {
+
+        String token = authService.login(dto);
+        Cookie cookie = new Cookie("token", token);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(new ApiResponseDTO<>(true, "Login successful", "Token set in HttpOnly cookie"));
+    }
+
+    // ------------------- GET PROFILE -------------------
+    @GetMapping("/auth/profile")
+    public ResponseEntity<ApiResponseDTO<?>> getProfile(HttpServletRequest request) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDTO<>(false, "Missing token cookie", null));
+
+            String userId = jwtUtils.getUserIdFromToken(token);
+            UserResponseDTO user = authService.getProfile(userId);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Profile fetched successfully", user));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDTO<>(false, "Invalid or expired token: " + e.getMessage(), null));
+        }
+    }
+
+    // ------------------- UPDATE PROFILE -------------------
+    @PutMapping("/auth/profile")
+    public ResponseEntity<ApiResponseDTO<?>> updateProfile(
+            HttpServletRequest request,
+            @RequestBody ProfileUpdateDTO dto) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDTO<>(false, "Missing token cookie", null));
+
+            String userId = jwtUtils.getUserIdFromToken(token);
+            UserResponseDTO user = authService.updateProfile(userId, dto);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Profile updated successfully", user));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDTO<>(false, "Invalid or expired token: " + e.getMessage(), null));
+        }
+    }
+
+    // ------------------- LOGOUT -------------------
+    @PostMapping("/auth/logout")
+    public ResponseEntity<ApiResponseDTO<String>> logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("token", null);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+        return ResponseEntity.ok(new ApiResponseDTO<>(true, "Logged out successfully", null));
+    }
+
+    // ------------------- HOME -------------------
+    @GetMapping("/home")
+    public ResponseEntity<ApiResponseDTO<String>> home() {
+        return ResponseEntity.ok(new ApiResponseDTO<>(true, "Welcome to HotelApp Home!", null));
+    }
+
+    // ------------------- ABOUT -------------------
+    @GetMapping("/about")
+    public ResponseEntity<ApiResponseDTO<String>> about() {
+        return ResponseEntity.ok(new ApiResponseDTO<>(true, "HotelApp is a simple hotel booking platform.", null));
+    }
+
+    // ------------------- BECOME SELLER -------------------
+    @PostMapping("/auth/become-seller")
+    public ResponseEntity<ApiResponseDTO<?>> becomeSeller(HttpServletRequest request) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDTO<>(false, "Missing token cookie", null));
+
+            String userId = jwtUtils.getUserIdFromToken(token);
+            UserResponseDTO user = authService.updateRoleToSeller(userId);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Congratulations! You are now a SELLER.", user));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDTO<>(false, "Failed to update role: " + e.getMessage(), null));
+        }
+    }
+
+    // ------------------- ADD ROOM (multipart) -------------------
+    @PostMapping("/rooms")
+    public ResponseEntity<ApiResponseDTO<RoomResponseDTO>> addRoom(
+            HttpServletRequest request,
+            @RequestParam("hotelName") String hotelName,
+            @RequestParam("location") String location,
+            @RequestParam("roomType") String roomType,
+            @RequestParam("price") Double price,
+            @RequestParam(value = "available", required = false, defaultValue = "true") boolean available,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images) {
+
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+
+            String sellerId = jwtUtils.getUserIdFromToken(token);
+
+            RoomRequestDTO dto = new RoomRequestDTO();
+            dto.setHotelName(hotelName);
+            dto.setLocation(location);
+            dto.setRoomType(roomType);
+            dto.setPrice(price);
+            dto.setAvailable(available);
+
+            if (images != null && !images.isEmpty()) {
+                List<String> imageUrls = new ArrayList<>();
+                for (MultipartFile file : images) {
+                    String url = cloudinaryConfig.uploadFile(cloudinary, file);
+                    imageUrls.add(url);
+                }
+                dto.setImages(imageUrls);
+            }
+
+            RoomResponseDTO room = authService.addRoom(sellerId, dto);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Room added successfully", room));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to add room: " + e.getMessage(), null));
+        }
+    }
+
+    // ------------------- UPDATE ROOM (multipart) -------------------
+    @PutMapping("/rooms/{roomId}")
+    public ResponseEntity<ApiResponseDTO<RoomResponseDTO>> updateRoom(
+            HttpServletRequest request,
+            @PathVariable String roomId,
+            @RequestParam("hotelName") String hotelName,
+            @RequestParam("location") String location,
+            @RequestParam("roomType") String roomType,
+            @RequestParam("price") Double price,
+            @RequestParam("available") Boolean available,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images) {
+
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+
+            String sellerId = jwtUtils.getUserIdFromToken(token);
+
+            RoomRequestDTO dto = new RoomRequestDTO();
+            dto.setHotelName(hotelName);
+            dto.setLocation(location);
+            dto.setRoomType(roomType);
+            dto.setPrice(price);
+            dto.setAvailable(available);
+
+            if (images != null && !images.isEmpty()) {
+                List<String> imageUrls = new ArrayList<>();
+                for (MultipartFile file : images) {
+                    String url = cloudinaryConfig.uploadFile(cloudinary, file);
+                    imageUrls.add(url);
+                }
+                dto.setImages(imageUrls);
+            }
+
+            RoomResponseDTO updated = authService.updateRoom(roomId, sellerId, dto);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Room updated successfully", updated));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to update room: " + e.getMessage(), null));
+        }
+    }
+
+    // ------------------- GET ROOMS -------------------
+    @GetMapping("/rooms")
+    public ResponseEntity<ApiResponseDTO<List<RoomResponseDTO>>> getRooms(HttpServletRequest request) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+
+            String sellerId = jwtUtils.getUserIdFromToken(token);
+            List<RoomResponseDTO> rooms = authService.getRoomsBySeller(sellerId);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Rooms fetched successfully", rooms));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to fetch rooms: " + e.getMessage(), null));
+        }
+    }
+
+    // ------------------- DELETE ROOM -------------------
+    @DeleteMapping("/rooms/{roomId}")
+    public ResponseEntity<ApiResponseDTO<String>> deleteRoom(
+            HttpServletRequest request,
+            @PathVariable String roomId) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+
+            String sellerId = jwtUtils.getUserIdFromToken(token);
+            authService.deleteRoom(roomId, sellerId);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Room deleted successfully", null));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to delete room: " + e.getMessage(), null));
+        }
+    }
+
+    // ------------------- HELPER -------------------
+    private String extractTokenFromCookies(HttpServletRequest request) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+}
