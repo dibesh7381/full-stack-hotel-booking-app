@@ -1,33 +1,93 @@
-import React from "react";
+import React, { useRef } from "react";
+import { FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaBed, FaCalendarAlt } from "react-icons/fa";
 
 const RoomCard = ({ room, onEdit, onDelete }) => {
-  const imageUrl = room.images && room.images.length > 0 ? room.images[0] : null;
+  const carouselRef = useRef(null);
+
+  const scrollLeft = () => {
+    carouselRef.current.scrollBy({ left: -carouselRef.current.offsetWidth, behavior: "smooth" });
+  };
+
+  const scrollRight = () => {
+    carouselRef.current.scrollBy({ left: carouselRef.current.offsetWidth, behavior: "smooth" });
+  };
+
+  const images = room.images && room.images.length > 0
+    ? room.images
+    : ["https://via.placeholder.com/600x400?text=No+Image"];
 
   return (
-    <div className="border rounded-lg shadow hover:shadow-lg transition overflow-hidden">
-      {imageUrl ? (
-        <img src={imageUrl} alt={room.hotelName} className="w-full h-48 object-cover" />
-      ) : (
-        <div className="w-full h-48 flex items-center justify-center bg-gray-200 text-gray-400">
-          No Image
+    <div className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-shadow overflow-hidden flex flex-col relative">
+      
+      {/* Image Carousel */}
+      <div className="relative">
+        <div
+          ref={carouselRef}
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth"
+        >
+          {images.map((img, idx) => (
+            <div key={idx} className="flex-shrink-0 w-full snap-center">
+              <img
+                src={img}
+                alt={`${room.hotelName} ${idx + 1}`}
+                className="w-full h-56 sm:h-64 md:h-72 object-cover"
+              />
+            </div>
+          ))}
         </div>
-      )}
-      <div className="p-4">
-        <h4 className="font-bold text-lg">{room.hotelName}</h4>
-        <p className="text-gray-600">{room.location}</p>
-        <p className="mt-1">Type: {room.roomType}</p>
-       <p>Price: ₹{room.price}</p>
-        <p>Available: {room.available ? "Yes" : "No"}</p>
-        <div className="flex gap-2 mt-3">
+
+        {/* Left & Right Buttons */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={scrollLeft}
+              className="absolute top-1/2 -translate-y-1/2 left-2 bg-white bg-opacity-70 hover:bg-opacity-100 text-gray-800 rounded-full p-2 shadow-md z-10"
+            >
+              <FaChevronLeft />
+            </button>
+            <button
+              onClick={scrollRight}
+              className="absolute top-1/2 -translate-y-1/2 right-2 bg-white bg-opacity-70 hover:bg-opacity-100 text-gray-800 rounded-full p-2 shadow-md z-10"
+            >
+              <FaChevronRight />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Room Details at Bottom Corner */}
+      <div className="px-6 py-4 flex flex-col justify-end flex-1">
+        <div className="mb-4">
+          <h4 className="text-2xl font-semibold text-gray-800">{room.hotelName}</h4>
+          <p className="text-gray-500 flex items-center mt-1">
+            <FaMapMarkerAlt className="mr-1 text-blue-600" /> {room.location}
+          </p>
+          <p className="text-gray-600 flex items-center mt-2">
+            <FaBed className="mr-1 text-gray-700" /> Room Type: {room.roomType}
+          </p>
+          <p className="text-lg font-bold text-blue-600 mt-2 flex items-center">
+            <FaCalendarAlt className="mr-1" /> ₹{room.price.toLocaleString("en-IN")}
+          </p>
+          <span
+            className={`inline-block mt-2 px-3 py-1 text-sm font-medium rounded-full ${
+              room.available ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+            }`}
+          >
+            {room.available ? "Available" : "Not Available"}
+          </span>
+        </div>
+
+        {/* Action Buttons aligned at bottom */}
+        <div className="flex gap-3">
           <button
             onClick={() => onEdit(room)}
-            className="bg-yellow-500 px-3 py-1 rounded text-white hover:bg-yellow-600 transition"
+            className="flex-1 bg-yellow-500 px-4 py-2 rounded-2xl text-white font-semibold hover:bg-yellow-600 transition"
           >
             Edit
           </button>
           <button
             onClick={() => onDelete(room.id)}
-            className="bg-red-500 px-3 py-1 rounded text-white hover:bg-red-600 transition"
+            className="flex-1 bg-red-500 px-4 py-2 rounded-2xl text-white font-semibold hover:bg-red-600 transition"
           >
             Delete
           </button>
@@ -38,3 +98,5 @@ const RoomCard = ({ room, onEdit, onDelete }) => {
 };
 
 export default RoomCard;
+
+
