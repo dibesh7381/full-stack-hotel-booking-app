@@ -1,19 +1,25 @@
 package HotelApp.com.example.HotelApp.service;
 
 import HotelApp.com.example.HotelApp.dto.*;
-import HotelApp.com.example.HotelApp.model.User;
+import HotelApp.com.example.HotelApp.model.Booking;
 import HotelApp.com.example.HotelApp.model.Room;
-import HotelApp.com.example.HotelApp.repository.UserRepository;
+import HotelApp.com.example.HotelApp.model.User;
+import HotelApp.com.example.HotelApp.repository.BookingRepository;
 import HotelApp.com.example.HotelApp.repository.RoomRepository;
+import HotelApp.com.example.HotelApp.repository.UserRepository;
 import HotelApp.com.example.HotelApp.security.JwtUtils;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +28,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RoomRepository roomRepository;
+    private final BookingRepository bookingRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final Cloudinary cloudinary;
@@ -58,20 +65,16 @@ public class AuthService {
         return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getImage());
     }
 
-    // ✅ UPDATED METHOD — handles name, password & image upload
     public UserResponseDTO updateProfile(String userId, ProfileUpdateDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Update name
         user.setName(dto.getName());
 
-        // Update password if provided
         if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
-        // ✅ Handle image upload if provided
         if (dto.getImage() != null && !dto.getImage().isEmpty()) {
             try {
                 Map uploadResult = cloudinary.uploader().upload(dto.getImage(), ObjectUtils.emptyMap());
@@ -113,7 +116,6 @@ public class AuthService {
         room.setAvailable(dto.getAvailable());
         room.setSellerId(sellerId);
 
-        // Upload images to Cloudinary
         List<String> uploadedUrls = dto.getImages().stream().map(img -> {
             try {
                 Map uploadResult = cloudinary.uploader().upload(img, ObjectUtils.emptyMap());
@@ -147,7 +149,6 @@ public class AuthService {
         room.setPrice(dto.getPrice());
         room.setAvailable(dto.getAvailable());
 
-        // Upload new images if provided
         if (dto.getImages() != null && !dto.getImages().isEmpty()) {
             List<String> uploadedUrls = dto.getImages().stream().map(img -> {
                 try {
@@ -202,5 +203,131 @@ public class AuthService {
                 })
                 .collect(Collectors.toList());
     }
-}
 
+
+    // -------------------- BOOKING METHODS -------------------
+// -------------------- BOOKING METHODS -------------------
+    public BookingResponseDTO createBooking(String userId, BookingRequestDTO dto) {
+        Optional<Room> roomOpt = roomRepository.findById(dto.getRoomId());
+        if (roomOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found");
+        }
+
+        Room room = roomOpt.get();
+
+        if (room.getAvailable() == null || !room.getAvailable()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Room not available");
+        }
+
+        Booking booking = new Booking();
+        booking.setUserId(userId);
+        booking.setRoomId(room.getId());
+        booking.setHotelName(room.getHotelName());
+        booking.setRoomType(room.getRoomType());
+        booking.setName(dto.getName());
+        booking.setAge(dto.getAge());
+        booking.setGender(dto.getGender());
+        booking.setBookingDate(dto.getBookingDate());
+        booking.setLeavingDate(dto.getLeavingDate());
+
+        Booking saved = bookingRepository.save(booking);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String bookingDateStr = saved.getBookingDate().format(formatter);
+        String leavingDateStr = saved.getLeavingDate().format(formatter);
+
+        String imageUrl = room.getImages() != null && !room.getImages().isEmpty() ? room.getImages().get(0) : null;
+
+        return new BookingResponseDTO(
+                saved.getId(),
+                saved.getUserId(),
+                saved.getRoomId(),
+                saved.getHotelName(),
+                saved.getRoomType(),
+                saved.getName(),
+                saved.getAge(),
+                saved.getGender(),
+                bookingDateStr,
+                leavingDateStr,
+                imageUrl,
+                room.getPrice(),    // 🔹 Add price
+                room.getLocation()  // 🔹 Add location
+        );
+    }
+
+    public List<BookingResponseDTO> getBookingsByUser(String userId) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        return bookingRepository.findByUserId(userId)
+                .stream()
+                .map(b -> {
+                    Room room = roomRepository.findById(b.getRoomId()).orElse(null);
+                    String imageUrl = null;
+                    Double price = null;
+                    String location = null;
+                    if (room != null) {
+                        if (room.getImages() != null && !room.getImages().isEmpty()) {
+                            imageUrl = room.getImages().get(0);
+                        }
+                        price = room.getPrice();
+                        location = room.getLocation();
+                    }
+
+                    return new BookingResponseDTO(
+                            b.getId(),
+                            b.getUserId(),
+                            b.getRoomId(),
+                            b.getHotelName(),
+                            b.getRoomType(),
+                            b.getName(),
+                            b.getAge(),
+                            b.getGender(),
+                            b.getBookingDate().format(formatter),
+                            b.getLeavingDate().format(formatter),
+                            imageUrl,
+                            price,      // 🔹 Add price
+                            location    // 🔹 Add location
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    public List<SellerBookingDTO> getBookingsForSeller(String sellerId) {
+        // Pehle seller ke rooms fetch karo
+        List<Room> sellerRooms = roomRepository.findBySellerId(sellerId);
+
+        List<String> roomIds = sellerRooms.stream()
+                .map(Room::getId)
+                .toList();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // Seller ke rooms ke bookings fetch karo
+        return bookingRepository.findAll().stream()
+                .filter(b -> roomIds.contains(b.getRoomId()))
+                .map(b -> new SellerBookingDTO(
+                        b.getId(),
+                        b.getName(),       // user ka name
+                        b.getAge(),
+                        b.getGender(),
+                        b.getRoomType(),
+                        b.getBookingDate().format(formatter),
+                        b.getLeavingDate().format(formatter)
+                ))
+                .toList();
+    }
+
+
+
+    // -------------------- DELETE BOOKING -------------------
+    public void deleteBooking(String userId, String bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
+
+        if (!booking.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You can only cancel your own bookings");
+        }
+
+        bookingRepository.delete(booking);
+    }
+}

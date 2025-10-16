@@ -24,57 +24,41 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="text-2xl font-bold tracking-wide">
-              <Link to="/" className="hover:text-gray-200 transition">
-                HotelApp
-              </Link>
+              <Link to="/" className="hover:text-gray-200 transition">HotelApp</Link>
             </div>
 
+            {/* Desktop Menu */}
             <div className="hidden md:flex space-x-6 items-center">
-              <Link to="/" className="hover:text-gray-200 transition">
-                Home
-              </Link>
-              <Link to="/about" className="hover:text-gray-200 transition">
-                About
-              </Link>
+              <Link to="/" className="hover:text-gray-200 transition">Home</Link>
+              <Link to="/about" className="hover:text-gray-200 transition">About</Link>
 
               {!loading && user && (
-                <Link to="/all-rooms" className="hover:text-gray-200 transition">
-                  All Rooms
-                </Link>
+                <Link to="/all-rooms" className="hover:text-gray-200 transition">All Rooms</Link>
               )}
 
               {!loading && !user && (
                 <>
-                  <Link to="/signup" className="hover:text-gray-200 transition">
-                    Sign Up
-                  </Link>
-                  <Link to="/login" className="hover:text-gray-200 transition">
-                    Login
-                  </Link>
+                  <Link to="/signup" className="hover:text-gray-200 transition">Sign Up</Link>
+                  <Link to="/login" className="hover:text-gray-200 transition">Login</Link>
                 </>
               )}
 
               {!loading && user && (
                 <>
-                  <Link to="/profile" className="hover:text-gray-200 transition">
-                    Profile
-                  </Link>
+                  <Link to="/profile" className="hover:text-gray-200 transition">Profile</Link>
 
                   {user.role === "SELLER" && (
-                    <Link
-                      to="/seller-dashboard"
-                      className="hover:text-gray-200 transition"
-                    >
-                      Seller Dashboard
-                    </Link>
+                    <>
+                      <Link to="/seller-dashboard" className="hover:text-gray-200 transition">Seller Dashboard</Link>
+                      <Link to="/seller-bookings" className="hover:text-gray-200 transition">View Orders</Link>
+                    </>
                   )}
 
-                  <Link
-                    to="/become-seller"
-                    className="hover:text-gray-200 transition"
-                  >
-                    Become Seller
-                  </Link>
+                  {user.role === "CUSTOMER" && (
+                    <Link to="/my-bookings" className="hover:text-gray-200 transition">My Bookings</Link>
+                  )}
+
+                  <Link to="/become-seller" className="hover:text-gray-200 transition">Become Seller</Link>
 
                   <button
                     onClick={handleLogout}
@@ -106,77 +90,36 @@ const Navbar = () => {
         } transition-transform duration-300 ease-in-out z-40 shadow-lg`}
       >
         <div className="flex flex-col mt-16 space-y-6 px-6">
-          <Link
-            to="/"
-            onClick={() => setIsOpen(false)}
-            className="hover:text-gray-200 transition text-lg"
-          >
-            Home
-          </Link>
-          <Link
-            to="/about"
-            onClick={() => setIsOpen(false)}
-            className="hover:text-gray-200 transition text-lg"
-          >
-            About
-          </Link>
+          <Link to="/" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">Home</Link>
+          <Link to="/about" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">About</Link>
 
           {!loading && user && (
-            <Link
-              to="/all-rooms"
-              onClick={() => setIsOpen(false)}
-              className="hover:text-gray-200 transition text-lg"
-            >
-              All Rooms
-            </Link>
+            <Link to="/all-rooms" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">All Rooms</Link>
           )}
 
           {!loading && !user && (
             <>
-              <Link
-                to="/signup"
-                onClick={() => setIsOpen(false)}
-                className="hover:text-gray-200 transition text-lg"
-              >
-                Sign Up
-              </Link>
-              <Link
-                to="/login"
-                onClick={() => setIsOpen(false)}
-                className="hover:text-gray-200 transition text-lg"
-              >
-                Login
-              </Link>
+              <Link to="/signup" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">Sign Up</Link>
+              <Link to="/login" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">Login</Link>
             </>
           )}
 
           {!loading && user && (
             <>
-              <Link
-                to="/profile"
-                onClick={() => setIsOpen(false)}
-                className="hover:text-gray-200 transition text-lg"
-              >
-                Profile
-              </Link>
+              <Link to="/profile" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">Profile</Link>
 
               {user.role === "SELLER" && (
-                <Link
-                  to="/seller-dashboard"
-                  onClick={() => setIsOpen(false)}
-                  className="hover:text-gray-200 transition text-lg"
-                >
-                  Seller Dashboard
-                </Link>
+                <>
+                  <Link to="/seller-dashboard" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">Seller Dashboard</Link>
+                  <Link to="/seller-bookings" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">View Orders</Link>
+                </>
               )}
 
-              <Link
-                to="/become-seller"
-                onClick={() => setIsOpen(false)}
-                className="hover:text-gray-200 transition text-lg"
-              >
-                Become Seller
-              </Link>
+              {user.role === "CUSTOMER" && (
+                <Link to="/my-bookings" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">My Bookings</Link>
+              )}
+
+              <Link to="/become-seller" onClick={() => setIsOpen(false)} className="hover:text-gray-200 transition text-lg">Become Seller</Link>
 
               <button
                 onClick={handleLogout}

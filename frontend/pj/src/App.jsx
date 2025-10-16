@@ -7,7 +7,10 @@ import Profile from "./Pages/Profile";
 import About from "./Pages/About";
 import BecomeSeller from "./Pages/BecomeSeller";
 import SellerDashboard from "./components/SellerDashboard";
-import AllRooms from "./Pages/AllRooms"; // ✅ import added
+import AllRooms from "./Pages/AllRooms"; 
+import BookingForm from "./components/BookingForm";
+import MyBookings from "./Pages/MyBookings";
+import SellerBookings from "./Pages/SellerBookings"; // 🔹 Import SellerBookings
 
 function App() {
   return (
@@ -21,11 +24,15 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/become-seller" element={<BecomeSeller />} />
         <Route path="/seller-dashboard" element={<SellerDashboard />} />
-        <Route path="/all-rooms" element={<AllRooms />} /> {/* ✅ Added */}
+        <Route path="/all-rooms" element={<AllRooms />} /> 
+        <Route path="/booking-form/:roomId" element={<BookingForm />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/seller-bookings" element={<SellerBookings />} /> {/* 🔹 Seller bookings route */}
       </Routes>
     </>
   );
 }
 
 export default App;
+
 

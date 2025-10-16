@@ -11,10 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class AuthController {
     private final AuthService authService;
     private final JwtUtils jwtUtils;
     private final CloudinaryConfig cloudinaryConfig;
-    private final Cloudinary cloudinary; // Inject Cloudinary bean
+    private final Cloudinary cloudinary;
 
     // ------------------- SIGNUP -------------------
     @PostMapping("/auth/register")
@@ -42,14 +43,28 @@ public class AuthController {
             @Validated @RequestBody LoginRequestDTO dto,
             HttpServletResponse response) {
 
-        String token = authService.login(dto);
-        Cookie cookie = new Cookie("token", token);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(7 * 24 * 60 * 60);
-        response.addCookie(cookie);
+        try {
+            String token = authService.login(dto);
 
-        return ResponseEntity.ok(new ApiResponseDTO<>(true, "Login successful", "Token set in HttpOnly cookie"));
+            Cookie cookie = new Cookie("token", token);
+            cookie.setHttpOnly(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(7 * 24 * 60 * 60);
+            response.addCookie(cookie);
+
+            return ResponseEntity.ok(
+                    new ApiResponseDTO<>(true, "Login successful", "Token set in HttpOnly cookie")
+            );
+
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDTO<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDTO<>(false, "Something went wrong", null));
+        }
     }
 
     // ------------------- GET PROFILE -------------------
@@ -71,7 +86,7 @@ public class AuthController {
         }
     }
 
-    // ------------------- UPDATE PROFILE (with optional image) -------------------
+    // ------------------- UPDATE PROFILE -------------------
     @PutMapping("/auth/profile")
     public ResponseEntity<ApiResponseDTO<?>> updateProfile(
             HttpServletRequest request,
@@ -148,7 +163,7 @@ public class AuthController {
         }
     }
 
-    // ------------------- ADD ROOM (multipart) -------------------
+    // ------------------- ADD ROOM -------------------
     @PostMapping("/rooms")
     public ResponseEntity<ApiResponseDTO<RoomResponseDTO>> addRoom(
             HttpServletRequest request,
@@ -192,7 +207,7 @@ public class AuthController {
         }
     }
 
-    // ------------------- UPDATE ROOM (multipart) -------------------
+    // ------------------- UPDATE ROOM -------------------
     @PutMapping("/rooms/{roomId}")
     public ResponseEntity<ApiResponseDTO<RoomResponseDTO>> updateRoom(
             HttpServletRequest request,
@@ -237,7 +252,7 @@ public class AuthController {
         }
     }
 
-    // ------------------- GET ROOMS -------------------
+    // ------------------- GET ROOMS BY SELLER -------------------
     @GetMapping("/rooms")
     public ResponseEntity<ApiResponseDTO<List<RoomResponseDTO>>> getRooms(HttpServletRequest request) {
         try {
@@ -277,6 +292,7 @@ public class AuthController {
         }
     }
 
+    // ------------------- GET ALL ROOMS -------------------
     @GetMapping("/all-rooms")
     public ResponseEntity<ApiResponseDTO<List<RoomResponseDTO>>> getAllRooms(HttpServletRequest request) {
         try {
@@ -294,6 +310,98 @@ public class AuthController {
         }
     }
 
+    // ------------------- CREATE BOOKING -------------------
+    @PostMapping("/bookings")
+    public ResponseEntity<ApiResponseDTO<BookingResponseDTO>> createBooking(
+            HttpServletRequest request,
+            @RequestBody BookingRequestDTO dto) {
+
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+
+            String userId = jwtUtils.getUserIdFromToken(token);
+
+            BookingResponseDTO booking = authService.createBooking(userId, dto);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Booking created successfully", booking));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to create booking: " + e.getMessage(), null));
+        }
+    }
+
+    // ------------------- GET BOOKINGS BY USER -------------------
+    @GetMapping("/bookings")
+    public ResponseEntity<ApiResponseDTO<List<BookingResponseDTO>>> getUserBookings(HttpServletRequest request) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+
+            String userId = jwtUtils.getUserIdFromToken(token);
+
+            List<BookingResponseDTO> bookings = authService.getBookingsByUser(userId);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "User bookings fetched successfully", bookings));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to fetch bookings: " + e.getMessage(), null));
+        }
+    }
+
+    // ------------------- DELETE BOOKING -------------------
+
+    // ------------------- DELETE BOOKING -------------------
+    @DeleteMapping("/bookings/{bookingId}")
+    public ResponseEntity<ApiResponseDTO<String>> deleteBooking(
+            HttpServletRequest request,
+            @PathVariable String bookingId) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+
+            String userId = jwtUtils.getUserIdFromToken(token);
+
+            authService.deleteBooking(userId, bookingId);
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Booking cancelled successfully", null));
+
+        } catch (ResponseStatusException e) {
+            // Updated to use HttpStatus from the exception
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(new ApiResponseDTO<>(false, e.getReason() != null ? e.getReason() : "Error occurred", null));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to cancel booking: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/seller/bookings")
+    public ResponseEntity<ApiResponseDTO<List<SellerBookingDTO>>> getSellerBookings(HttpServletRequest request) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+
+            String sellerId = jwtUtils.getUserIdFromToken(token);
+            List<SellerBookingDTO> bookings = authService.getBookingsForSeller(sellerId);
+
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Seller bookings fetched successfully", bookings));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to fetch seller bookings: " + e.getMessage(), null));
+        }
+    }
+
+
+
     // ------------------- HELPER -------------------
     private String extractTokenFromCookies(HttpServletRequest request) {
         if (request.getCookies() != null) {
@@ -306,4 +414,3 @@ public class AuthController {
         return null;
     }
 }
-
