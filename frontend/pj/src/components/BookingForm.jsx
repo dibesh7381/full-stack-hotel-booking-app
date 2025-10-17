@@ -18,6 +18,11 @@ const BookingForm = () => {
     leavingDate: "",
   });
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState(""); // ✅ for showing message
+  const [messageType, setMessageType] = useState(""); // ✅ "success" or "error"
+
+  const today = new Date();
+  const localDate = today.toLocaleDateString("en-CA");
 
   // 🔹 Fetch specific room details
   useEffect(() => {
@@ -28,9 +33,7 @@ const BookingForm = () => {
         });
         const data = await res.json();
         if (data.success) {
-          const selectedRoom = data.data.find(
-            (r) => r.id.toString() === roomId
-          );
+          const selectedRoom = data.data.find((r) => r.id.toString() === roomId);
           setRoom(selectedRoom);
         }
       } catch (err) {
@@ -50,12 +53,9 @@ const BookingForm = () => {
     e.preventDefault();
 
     // 🔸 Validate date range
-    if (
-      form.bookingDate &&
-      form.leavingDate &&
-      form.leavingDate <= form.bookingDate
-    ) {
-      alert("Leaving date must be after booking date.");
+    if (form.bookingDate && form.leavingDate && form.leavingDate <= form.bookingDate) {
+      setMessage("⚠️ Leaving date must be after booking date.");
+      setMessageType("error");
       return;
     }
 
@@ -77,15 +77,21 @@ const BookingForm = () => {
       });
 
       const data = await res.json();
+
       if (data.success) {
-        alert("✅ Booking successful!");
-        navigate("/profile"); // or homepage
+        setMessage("✅ Booking successful!");
+        setMessageType("success");
+
+        // optional: navigate after short delay
+        setTimeout(() => navigate("/profile"), 1500);
       } else {
-        alert("❌ Booking failed: " + data.message);
+        setMessage(`❌ Booking failed: ${data.message}`);
+        setMessageType("error");
       }
     } catch (err) {
       console.error(err);
-      alert("Something went wrong!");
+      setMessage("Something went wrong! Please try again.");
+      setMessageType("error");
     }
   };
 
@@ -95,7 +101,7 @@ const BookingForm = () => {
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-50 py-10 px-4">
       <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-lg">
-        {/* 🔹 Room Card Section */}
+        {/* 🔹 Room Info */}
         <div className="mb-6 border rounded-2xl overflow-hidden shadow-md">
           <img
             src={
@@ -115,7 +121,7 @@ const BookingForm = () => {
           </div>
         </div>
 
-        {/* 🔹 Booking Form Section */}
+        {/* 🔹 Booking Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label>
             Name
@@ -162,6 +168,7 @@ const BookingForm = () => {
               name="bookingDate"
               value={form.bookingDate}
               onChange={handleChange}
+              min={localDate}
               required
               className="w-full mt-1 p-2 border rounded-lg"
             />
@@ -174,14 +181,28 @@ const BookingForm = () => {
               name="leavingDate"
               value={form.leavingDate}
               onChange={handleChange}
+              min={form.bookingDate || localDate}
               required
               className="w-full mt-1 p-2 border rounded-lg"
             />
           </label>
 
+          {/* 🔹 Message Box */}
+          {message && (
+            <div
+              className={`text-center font-medium p-2 rounded-lg ${
+                messageType === "success"
+                  ? "text-green-600 bg-green-50 border border-green-200"
+                  : "text-red-600 bg-red-50 border border-red-200"
+              }`}
+            >
+              {message}
+            </div>
+          )}
+
           <button
             type="submit"
-            className="mt-4 w-full py-3 rounded-2xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            className="mt-2 w-full py-3 rounded-2xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           >
             Confirm Booking
           </button>

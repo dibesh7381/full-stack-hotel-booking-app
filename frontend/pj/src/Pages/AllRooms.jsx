@@ -49,6 +49,7 @@ const AllRooms = () => {
   }, [user]);
 
   const scrollLeft = (id) => {
+    if (!carouselRefs.current[id]) return;
     carouselRefs.current[id].scrollBy({
       left: -carouselRefs.current[id].offsetWidth,
       behavior: "smooth",
@@ -56,17 +57,18 @@ const AllRooms = () => {
   };
 
   const scrollRight = (id) => {
+    if (!carouselRefs.current[id]) return;
     carouselRefs.current[id].scrollBy({
       left: carouselRefs.current[id].offsetWidth,
       behavior: "smooth",
     });
   };
 
-  if (loading) return <Loader />;
-
   const hasBookedRoom = (roomId) => {
     return userBookings.some((booking) => booking.roomId === roomId);
   };
+
+  if (loading) return <Loader />;
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-12">
@@ -80,6 +82,7 @@ const AllRooms = () => {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {rooms.map((room) => {
             const alreadyBooked = hasBookedRoom(room.id);
+
             return (
               <div
                 key={room.id}
@@ -148,14 +151,18 @@ const AllRooms = () => {
 
                   <button
                     className={`mt-4 w-full py-3 rounded-2xl font-semibold transition-colors ${
-                      isSeller || alreadyBooked
+                      isSeller || alreadyBooked || !room.available
                         ? "bg-gray-400 cursor-not-allowed text-white"
                         : "bg-blue-600 text-white hover:bg-blue-700"
                     }`}
-                    disabled={isSeller || alreadyBooked}
-                    onClick={() => !isSeller && !alreadyBooked && navigate(`/booking-form/${room.id}`)}
+                    disabled={isSeller || alreadyBooked || !room.available}
+                    onClick={() => !isSeller && !alreadyBooked && room.available && navigate(`/booking-form/${room.id}`)}
                   >
-                    {alreadyBooked ? "You already booked" : "Book Now"}
+                    {alreadyBooked
+                      ? "You already booked"
+                      : room.available
+                      ? "Book Now"
+                      : "Not Available"}
                   </button>
                 </div>
               </div>
