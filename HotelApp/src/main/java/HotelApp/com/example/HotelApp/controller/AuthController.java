@@ -398,6 +398,27 @@ public class AuthController {
         }
     }
 
+    // ------------------- GET ARCHIVED BOOKINGS BY USER -------------------
+    @GetMapping("/bookings/archive")
+    public ResponseEntity<ApiResponseDTO<List<BookingArchiveDTO>>> getArchivedBookings(HttpServletRequest request) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+            }
+
+            String userId = jwtUtils.getUserIdFromToken(token);
+            List<BookingArchiveDTO> archivedBookings = authService.getArchivedBookingsByUser(userId);
+
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Archived bookings fetched successfully", archivedBookings));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to fetch archived bookings: " + e.getMessage(), null));
+        }
+    }
+
 
 
     // ------------------- HELPER -------------------
