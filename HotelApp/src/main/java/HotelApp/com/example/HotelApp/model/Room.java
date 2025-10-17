@@ -15,12 +15,14 @@ public class Room {
     private String hotelName;
     private String location;
 
-    private String roomType; // frontend se string, e.g., "Single", "Double", etc.
-
-    private List<String> images; // image URLs
-
+    private String roomType;
+    private List<String> images;
     private Double price;
     private Boolean available;
+    private String sellerId;
 
-    private String sellerId; // user ID who added the room
+    // ✅ Add this manually so you can use room.isAvailable()
+    public boolean isAvailable() {
+        return available != null && available;
+    }
 }

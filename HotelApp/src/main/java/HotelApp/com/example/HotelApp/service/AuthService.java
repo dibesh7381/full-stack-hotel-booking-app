@@ -2,6 +2,7 @@ package HotelApp.com.example.HotelApp.service;
 
 import HotelApp.com.example.HotelApp.dto.*;
 import HotelApp.com.example.HotelApp.model.Booking;
+import org.springframework.transaction.annotation.Transactional;
 import HotelApp.com.example.HotelApp.model.Room;
 import HotelApp.com.example.HotelApp.model.User;
 import HotelApp.com.example.HotelApp.repository.BookingRepository;
@@ -206,7 +207,7 @@ public class AuthService {
 
 
     // -------------------- BOOKING METHODS -------------------
-// -------------------- BOOKING METHODS -------------------
+    @Transactional // 🔹 Add this annotation
     public BookingResponseDTO createBooking(String userId, BookingRequestDTO dto) {
         Optional<Room> roomOpt = roomRepository.findById(dto.getRoomId());
         if (roomOpt.isEmpty()) {
@@ -219,11 +220,25 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Room not available");
         }
 
+        // 🔹 Step 1: Check for existing overlapping bookings for same room
+        List<Booking> conflicts = bookingRepository.findConflictingBookings(
+                dto.getRoomId(),
+                dto.getBookingDate(),
+                dto.getLeavingDate()
+        );
+
+        if (!conflicts.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Room is already booked for the selected dates please try another date");
+        }
+
+        // 🔹 Step 2: Create new booking
         Booking booking = new Booking();
         booking.setUserId(userId);
         booking.setRoomId(room.getId());
         booking.setHotelName(room.getHotelName());
         booking.setRoomType(room.getRoomType());
+        booking.setLocation(room.getLocation());
+        booking.setPrice(room.getPrice());
         booking.setName(dto.getName());
         booking.setAge(dto.getAge());
         booking.setGender(dto.getGender());
@@ -236,7 +251,9 @@ public class AuthService {
         String bookingDateStr = saved.getBookingDate().format(formatter);
         String leavingDateStr = saved.getLeavingDate().format(formatter);
 
-        String imageUrl = room.getImages() != null && !room.getImages().isEmpty() ? room.getImages().get(0) : null;
+        String imageUrl = room.getImages() != null && !room.getImages().isEmpty()
+                ? room.getImages().get(0)
+                : null;
 
         return new BookingResponseDTO(
                 saved.getId(),
@@ -250,11 +267,10 @@ public class AuthService {
                 bookingDateStr,
                 leavingDateStr,
                 imageUrl,
-                room.getPrice(),    // 🔹 Add price
-                room.getLocation()  // 🔹 Add location
+                room.getPrice(),
+                room.getLocation()
         );
     }
-
     public List<BookingResponseDTO> getBookingsByUser(String userId) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -293,7 +309,7 @@ public class AuthService {
     }
 
     public List<SellerBookingDTO> getBookingsForSeller(String sellerId) {
-        // Pehle seller ke rooms fetch karo
+
         List<Room> sellerRooms = roomRepository.findBySellerId(sellerId);
 
         List<String> roomIds = sellerRooms.stream()

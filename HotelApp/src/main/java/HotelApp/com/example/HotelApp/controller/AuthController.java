@@ -354,8 +354,6 @@ public class AuthController {
     }
 
     // ------------------- DELETE BOOKING -------------------
-
-    // ------------------- DELETE BOOKING -------------------
     @DeleteMapping("/bookings/{bookingId}")
     public ResponseEntity<ApiResponseDTO<String>> deleteBooking(
             HttpServletRequest request,

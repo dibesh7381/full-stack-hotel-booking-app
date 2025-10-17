@@ -3,7 +3,6 @@ package HotelApp.com.example.HotelApp.model;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 import java.time.LocalDate;
 
 @Data
@@ -19,12 +18,14 @@ public class Booking {
     private String name;
     private int age;
     private String gender;
-    private LocalDate bookingDate;
-    private LocalDate leavingDate; // ✅ Existing field
+
+    private LocalDate bookingDate; // ✅ check-in date
+    private LocalDate leavingDate; // ✅ check-out date
 
     // Optional denormalized data (for easy display)
     private String hotelName;
     private String roomType;
-    private String location;  // ✅ Added location
+    private String location;
     private Double price;
 }
+
