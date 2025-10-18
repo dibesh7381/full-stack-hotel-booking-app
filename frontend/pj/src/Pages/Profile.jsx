@@ -3,8 +3,8 @@ import { AuthContext } from "../contexts/AuthContext";
 import Loader from "../components/Loader";
 
 const Profile = () => {
-  const { user, setUser, fetchProfile, loading } = useContext(AuthContext); // 🔹 simplified
-  const [profile, setProfile] = useState({ name: "", email: "", image: null });
+  const { user, setUser, fetchProfile, loading } = useContext(AuthContext);
+  const [profile, setProfile] = useState({ name: "", email: "", image: null, role: "" });
   const [imageFile, setImageFile] = useState(null);
   const [password, setPassword] = useState("");
   const [updating, setUpdating] = useState(false);
@@ -35,8 +35,8 @@ const Profile = () => {
       const updatedUser = data.data;
       const updatedImage = updatedUser.image ? `${updatedUser.image}?v=${Date.now()}` : null;
 
-      setUser((prev) => ({ ...prev, name: updatedUser.name, image: updatedImage }));
-      setProfile((prev) => ({ ...prev, name: updatedUser.name, image: updatedImage }));
+      setUser((prev) => ({ ...prev, name: updatedUser.name, image: updatedImage, role: updatedUser.role }));
+      setProfile((prev) => ({ ...prev, name: updatedUser.name, image: updatedImage, role: updatedUser.role }));
       setPassword("");
       setImageFile(null);
     } catch (err) {
@@ -55,30 +55,30 @@ const Profile = () => {
           key={displayImage}
           src={displayImage}
           alt="Profile"
-          className="w-24 h-24 rounded-full object-cover border-2 border-blue-500 shadow-md"
+          className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-blue-500 shadow-md"
         />
       );
     }
 
     const initial = profile.name?.charAt(0).toUpperCase() || "?";
     return (
-      <div className="w-24 h-24 rounded-full bg-blue-500 text-white flex items-center justify-center text-3xl font-bold shadow-md">
+      <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-blue-500 text-white flex items-center justify-center text-4xl font-bold shadow-md">
         {initial}
       </div>
     );
   };
 
-  if (loading) return <Loader />; // 🔹 simplified
+  if (loading) return <Loader />;
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg relative">
       {updating && <Loader />}
       
-      <h2 className="text-2xl font-bold text-center mb-6">My Profile</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4">My Profile</h2>
 
       <div className="flex flex-col items-center space-y-3 mb-4">
         {renderProfileImage()}
-        <label className="cursor-pointer text-blue-600 hover:underline">
+        <label className="cursor-pointer text-blue-600 hover:underline text-sm sm:text-base">
           Change Photo
           <input
             type="file"
@@ -87,6 +87,11 @@ const Profile = () => {
             onChange={(e) => setImageFile(e.target.files[0])}
           />
         </label>
+        {profile.role && (
+          <p className="mt-2 text-green-600 font-semibold text-center">
+            🎉 Congratulations! You are logged in as <span className="capitalize">{profile.role}</span>.
+          </p>
+        )}
       </div>
 
       <form onSubmit={handleProfileUpdate} className="space-y-4">
