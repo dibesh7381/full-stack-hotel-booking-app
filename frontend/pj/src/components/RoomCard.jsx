@@ -81,13 +81,13 @@ const RoomCard = ({ room, onEdit, onDelete }) => {
         <div className="flex gap-3">
           <button
             onClick={() => onEdit(room)}
-            className="flex-1 bg-yellow-500 px-4 py-2 rounded-2xl text-white font-semibold hover:bg-yellow-600 transition"
+            className="flex-1 cursor-pointer bg-yellow-500 px-4 py-2 rounded-2xl text-white font-semibold hover:bg-yellow-600 transition"
           >
             Edit
           </button>
           <button
             onClick={() => onDelete(room.id)}
-            className="flex-1 bg-red-500 px-4 py-2 rounded-2xl text-white font-semibold hover:bg-red-600 transition"
+            className="flex-1 cursor-pointer bg-red-500 px-4 py-2 rounded-2xl text-white font-semibold hover:bg-red-600 transition"
           >
             Delete
           </button>

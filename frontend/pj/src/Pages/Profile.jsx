@@ -1,15 +1,13 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import Loader from "../components/Loader";
-import ConfirmModal from "../components/ConfirmModal";
 
 const Profile = () => {
-  const { user, setUser, fetchProfile, loading: authLoading } = useContext(AuthContext);
+  const { user, setUser, fetchProfile, loading } = useContext(AuthContext); // 🔹 simplified
   const [profile, setProfile] = useState({ name: "", email: "", image: null });
   const [imageFile, setImageFile] = useState(null);
   const [password, setPassword] = useState("");
   const [updating, setUpdating] = useState(false);
-  const [modal, setModal] = useState({ open: false, title: "", message: "", type: "success" });
 
   useEffect(() => {
     if (!user) fetchProfile();
@@ -41,11 +39,8 @@ const Profile = () => {
       setProfile((prev) => ({ ...prev, name: updatedUser.name, image: updatedImage }));
       setPassword("");
       setImageFile(null);
-
-      setModal({ open: true, title: "Profile Updated", message: "Your profile was updated successfully!", type: "success" });
     } catch (err) {
       console.error(err);
-      setModal({ open: true, title: "Update Failed", message: err.message, type: "error" });
     } finally {
       setUpdating(false);
     }
@@ -73,7 +68,7 @@ const Profile = () => {
     );
   };
 
-  if (authLoading) return <Loader />;
+  if (loading) return <Loader />; // 🔹 simplified
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg relative">
@@ -130,19 +125,11 @@ const Profile = () => {
         <button
           type="submit"
           disabled={updating}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded transition disabled:opacity-50"
+          className="w-full cursor-pointer bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded transition disabled:opacity-50"
         >
           Update Profile
         </button>
       </form>
-
-      <ConfirmModal
-        isOpen={modal.open}
-        onClose={() => setModal({ ...modal, open: false })}
-        title={modal.title}
-        message={modal.message}
-        type={modal.type}
-      />
     </div>
   );
 };

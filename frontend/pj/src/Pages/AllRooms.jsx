@@ -111,13 +111,13 @@ const AllRooms = () => {
                     <>
                       <button
                         onClick={() => scrollLeft(room.id)}
-                        className="absolute top-1/2 -translate-y-1/2 left-2 bg-white bg-opacity-70 hover:bg-opacity-100 text-gray-800 rounded-full p-2 shadow-md z-10"
+                        className="absolute top-1/2 cursor-pointer -translate-y-1/2 left-2 bg-white bg-opacity-70 hover:bg-opacity-100 text-gray-800 rounded-full p-2 shadow-md z-10"
                       >
                         <FaChevronLeft />
                       </button>
                       <button
                         onClick={() => scrollRight(room.id)}
-                        className="absolute top-1/2 -translate-y-1/2 right-2 bg-white bg-opacity-70 hover:bg-opacity-100 text-gray-800 rounded-full p-2 shadow-md z-10"
+                        className="absolute cursor-pointer top-1/2 -translate-y-1/2 right-2 bg-white bg-opacity-70 hover:bg-opacity-100 text-gray-800 rounded-full p-2 shadow-md z-10"
                       >
                         <FaChevronRight />
                       </button>
@@ -150,7 +150,7 @@ const AllRooms = () => {
                   </div>
 
                   <button
-                    className={`mt-4 w-full py-3 rounded-2xl font-semibold transition-colors ${
+                    className={`mt-4 w-full cursor-pointer py-3 rounded-2xl font-semibold transition-colors ${
                       isSeller || alreadyBooked || !room.available
                         ? "bg-gray-400 cursor-not-allowed text-white"
                         : "bg-blue-600 text-white hover:bg-blue-700"

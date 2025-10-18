@@ -11,6 +11,8 @@ import AllRooms from "./Pages/AllRooms";
 import BookingForm from "./components/BookingForm";
 import MyBookings from "./Pages/MyBookings";
 import SellerBookings from "./Pages/SellerBookings"; // 🔹 Import SellerBookings
+import BookingHistory from "./Pages/BookingHistory"; // 🔹 Import BookingHistory
+import SellerHistory from "./Pages/SellerHistory";
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
         <Route path="/booking-form/:roomId" element={<BookingForm />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/seller-bookings" element={<SellerBookings />} /> {/* 🔹 Seller bookings route */}
+        <Route path="/booking-history" element={<BookingHistory />} /> {/* 🔹 Booking history route */}
+        <Route path="/seller/history" element={<SellerHistory />} />
       </Routes>
     </>
   );

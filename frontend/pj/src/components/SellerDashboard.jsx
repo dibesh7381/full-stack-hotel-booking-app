@@ -17,8 +17,8 @@ const SellerDashboard = () => {
   });
   const [editingRoomId, setEditingRoomId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [modal, setModal] = useState({ open: false, title: "", message: "", type: "success" });
-  const [roomToDelete, setRoomToDelete] = useState(null); // 🔹 Track room for deletion
+  const [roomToDelete, setRoomToDelete] = useState(null); // Track room for deletion
+  const [modal, setModal] = useState({ open: false, title: "", message: "", type: "error" }); // Only for delete
 
   // ----------------- API FUNCTIONS -----------------
   const fetchRooms = async () => {
@@ -72,18 +72,14 @@ const SellerDashboard = () => {
   // ----------------- ADD / UPDATE -----------------
   const handleAddRoom = async (e) => {
     e.preventDefault();
-    if (formData.images.some((img) => !img)) {
-      setModal({ open: true, title: "Upload Error", message: "Please upload all 5 images before submitting.", type: "error" });
-      return;
-    }
+    if (formData.images.some((img) => !img)) return; // skip modal for add/update
     setSubmitting(true);
     try {
       const data = await handleRoomAPI("POST");
       if (data?.success) {
         setFormData({ hotelName: "", location: "", roomType: "", price: "", available: true, images: [null, null, null, null, null] });
         fetchRooms();
-        setModal({ open: true, title: "Room Added", message: "Room added successfully!", type: "success" });
-      } else setModal({ open: true, title: "Add Failed", message: data?.message || "Failed to add room.", type: "error" });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -91,10 +87,7 @@ const SellerDashboard = () => {
 
   const handleUpdateRoom = async (e) => {
     e.preventDefault();
-    if (formData.images.some((img) => !img)) {
-      setModal({ open: true, title: "Upload Error", message: "Please upload all 5 images before updating.", type: "error" });
-      return;
-    }
+    if (formData.images.some((img) => !img)) return; // skip modal for add/update
     setSubmitting(true);
     try {
       const data = await handleRoomAPI("PUT", editingRoomId);
@@ -102,8 +95,7 @@ const SellerDashboard = () => {
         setFormData({ hotelName: "", location: "", roomType: "", price: "", available: true, images: [null, null, null, null, null] });
         setEditingRoomId(null);
         fetchRooms();
-        setModal({ open: true, title: "Room Updated", message: "Room updated successfully!", type: "success" });
-      } else setModal({ open: true, title: "Update Failed", message: data?.message || "Failed to update room.", type: "error" });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -124,7 +116,7 @@ const SellerDashboard = () => {
     setEditingRoomId(room.id);
   };
 
-  // 🔹 Open modal for delete confirmation
+  // ----------------- DELETE -----------------
   const handleDelete = (id) => {
     setRoomToDelete(id);
     setModal({
@@ -135,7 +127,6 @@ const SellerDashboard = () => {
     });
   };
 
-  // 🔹 Confirm deletion
   const confirmDelete = async () => {
     if (!roomToDelete) return;
     setSubmitting(true);
@@ -196,7 +187,7 @@ const SellerDashboard = () => {
           ))}
         </div>
 
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+        <button type="submit" className="bg-blue-600 cursor-pointer text-white px-4 py-2 rounded">
           {editingRoomId ? "Update Room" : "Add Room"}
         </button>
       </form>
@@ -210,14 +201,14 @@ const SellerDashboard = () => {
         ))}
       </div>
 
-      {/* ---------------- CONFIRM MODAL ---------------- */}
+      {/* ---------------- CONFIRM MODAL ONLY FOR DELETE ---------------- */}
       <ConfirmModal
         isOpen={modal.open}
         onClose={() => setModal({ ...modal, open: false, title: "", message: "" })}
         title={modal.title}
         message={modal.message}
         type={modal.type}
-        onConfirm={confirmDelete} // 🔹 Only called when user clicks OK
+        onConfirm={confirmDelete} // Only triggers delete
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../contexts/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
+import Loader from "../components/Loader.jsx";
 
 const BecomeSeller = () => {
   const { user, fetchProfile, setUser } = useContext(AuthContext);
@@ -39,7 +40,7 @@ const BecomeSeller = () => {
     navigate("/seller-dashboard"); // Redirect to add rooms page
   };
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (loading) return <Loader/>
   if (!user) return <p className="text-center mt-10">Please login to access this page.</p>;
 
   return (
@@ -50,7 +51,7 @@ const BecomeSeller = () => {
           <p>You are already a seller.</p>
           <button
             onClick={handleAddRooms}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition"
+            className="bg-blue-600  cursor-pointer hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition"
           >
             Add Your Rooms
           </button>
@@ -62,7 +63,7 @@ const BecomeSeller = () => {
           <button
             onClick={handleBecomeSeller}
             disabled={updating}
-            className="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-md transition"
+            className="bg-green-600 cursor-pointer hover:bg-green-700 text-white font-medium px-4 py-2 rounded-md transition"
           >
             {updating ? "Updating..." : "Become Seller"}
           </button>

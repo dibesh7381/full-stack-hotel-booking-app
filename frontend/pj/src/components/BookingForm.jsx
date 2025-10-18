@@ -187,7 +187,6 @@ const BookingForm = () => {
             />
           </label>
 
-          {/* 🔹 Message Box */}
           {message && (
             <div
               className={`text-center font-medium p-2 rounded-lg ${
@@ -202,7 +201,7 @@ const BookingForm = () => {
 
           <button
             type="submit"
-            className="mt-2 w-full py-3 rounded-2xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            className="mt-2 w-full cursor-pointer py-3 rounded-2xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           >
             Confirm Booking
           </button>
