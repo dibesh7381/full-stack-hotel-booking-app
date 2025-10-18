@@ -774,14 +774,20 @@ public class AuthService {
 
     public List<SellerBookingDTO> getBookingsForSeller(String sellerId) {
         List<Room> sellerRooms = roomRepository.findBySellerId(sellerId);
-        List<String> roomIds = sellerRooms.stream()
-                .map(Room::getId)
-                .toList();
+
+        // 🔹 Map roomId → first image from images list
+        Map<String, String> roomImageMap = sellerRooms.stream()
+                .collect(Collectors.toMap(
+                        Room::getId,
+                        room -> (room.getImages() != null && !room.getImages().isEmpty())
+                                ? room.getImages().get(0)
+                                : null
+                ));
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         return bookingRepository.findAll().stream()
-                .filter(b -> roomIds.contains(b.getRoomId()))
+                .filter(b -> roomImageMap.containsKey(b.getRoomId()))
                 .map(b -> new SellerBookingDTO(
                         b.getId(),
                         b.getName(),
@@ -789,10 +795,46 @@ public class AuthService {
                         b.getGender(),
                         b.getRoomType(),
                         b.getBookingDate().format(formatter),
-                        b.getLeavingDate().format(formatter)
+                        b.getLeavingDate().format(formatter),
+                        roomImageMap.get(b.getRoomId()) // ✅ first image
                 ))
                 .toList();
     }
+
+    public List<SellerBookingArchiveDTO> getSellerBookingHistory(String sellerId) {
+        // 1️⃣ Seller ke rooms fetch karo
+        List<Room> sellerRooms = roomRepository.findBySellerId(sellerId);
+
+        List<String> roomIds = sellerRooms.stream()
+                .map(Room::getId)
+                .toList();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // 2️⃣ BookingArchive me filter karo jahan roomId seller ke rooms me ho
+        return bookingArchiveRepository.findAll().stream()
+                .filter(ba -> roomIds.contains(ba.getRoomId()))
+                .map(ba -> new SellerBookingArchiveDTO(
+                        ba.getId(),
+                        ba.getUserId(),
+                        ba.getRoomId(),
+                        ba.getName(),
+                        ba.getAge(),
+                        ba.getGender(),
+                        ba.getBookingDate().format(formatter),
+                        ba.getLeavingDate().format(formatter),
+                        ba.getHotelName(),
+                        ba.getRoomType(),
+                        ba.getLocation(),
+                        ba.getPrice(),
+                        ba.getStatus(),
+                        ba.getImageUrl() // room image
+                ))
+                .toList();
+    }
+
+
+
 
 
     @Transactional

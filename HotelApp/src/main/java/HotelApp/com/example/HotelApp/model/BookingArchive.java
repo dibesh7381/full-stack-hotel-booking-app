@@ -23,10 +23,6 @@ public class BookingArchive {
     private String roomType;
     private String location;
     private Double price;
-
-    // 🔹 Status field
     private String status;  // e.g. "CANCELLED" or "COMPLETED"
-
-    // 🔹 Image field
     private String imageUrl; // ✅ Add image URL from the room
 }

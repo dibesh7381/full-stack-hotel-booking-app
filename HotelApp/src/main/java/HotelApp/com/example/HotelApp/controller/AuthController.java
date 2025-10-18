@@ -419,6 +419,32 @@ public class AuthController {
         }
     }
 
+    // ------------------- GET SELLER BOOKING HISTORY -------------------
+    @GetMapping("/seller/bookings/history")
+    public ResponseEntity<ApiResponseDTO<List<SellerBookingArchiveDTO>>> getSellerBookingHistory(HttpServletRequest request) {
+        try {
+            String token = extractTokenFromCookies(request);
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>(false, "Missing token", null));
+            }
+
+            // 🔹 JWT se sellerId nikalna
+            String sellerId = jwtUtils.getUserIdFromToken(token);
+
+            // 🔹 Service call to fetch seller's archived bookings
+            List<SellerBookingArchiveDTO> history = authService.getSellerBookingHistory(sellerId);
+
+            return ResponseEntity.ok(new ApiResponseDTO<>(true, "Seller booking history fetched successfully", history));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDTO<>(false, "Failed to fetch seller booking history: " + e.getMessage(), null));
+        }
+    }
+
+
+
+
 
 
     // ------------------- HELPER -------------------

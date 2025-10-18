@@ -15,4 +15,5 @@ public class SellerBookingDTO {
     private String roomType;
     private String bookingDate;
     private String leavingDate;
+    private String roomImage; // 🖼️ New field added
 }
