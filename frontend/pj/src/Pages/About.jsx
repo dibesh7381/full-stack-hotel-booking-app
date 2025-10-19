@@ -7,8 +7,7 @@ const About = () => {
     const fetchAbout = async () => {
       try {
         const res = await fetch("http://localhost:8080/api/about", {
-          method: "GET",
-          credentials: "include",
+          method: "GET"
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Error fetching data");
