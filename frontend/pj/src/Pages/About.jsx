@@ -1,21 +1,32 @@
 import { useState, useEffect } from "react";
 
 const About = () => {
-  const [message, setMessage] = useState("");
+  const [aboutData, setAboutData] = useState({
+    message: "",
+    mission: "",
+    vision: "",
+    values: [],
+  });
 
   useEffect(() => {
     const fetchAbout = async () => {
       try {
         const res = await fetch("http://localhost:8080/api/about", {
-          method: "GET"
+          method: "GET",
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Error fetching data");
-        setMessage(data.message);
+        setAboutData(data.data); // data.data contains AboutDTO
       } catch (err) {
-        setMessage(err.message);
+        setAboutData({
+          message: err.message,
+          mission: "",
+          vision: "",
+          values: [],
+        });
       }
     };
+
     fetchAbout();
   }, []);
 
@@ -29,23 +40,31 @@ const About = () => {
 
         {/* Content */}
         <div className="p-6 space-y-4">
-          <p className="text-gray-700 text-lg leading-relaxed">{message}</p>
+          <p className="text-gray-700 text-lg leading-relaxed">{aboutData.message}</p>
 
-          {/* Optional: Add some cards / highlights */}
+          {/* Mission & Vision */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
             <div className="bg-blue-50 p-4 rounded-lg shadow hover:shadow-md transition">
               <h3 className="font-semibold text-blue-700">Our Mission</h3>
-              <p className="text-gray-600 text-sm">
-                Providing the best hotel booking experience with simplicity and trust.
-              </p>
+              <p className="text-gray-600 text-sm">{aboutData.mission}</p>
             </div>
             <div className="bg-blue-50 p-4 rounded-lg shadow hover:shadow-md transition">
               <h3 className="font-semibold text-blue-700">Our Vision</h3>
-              <p className="text-gray-600 text-sm">
-                To be the most reliable platform for travelers worldwide.
-              </p>
+              <p className="text-gray-600 text-sm">{aboutData.vision}</p>
             </div>
           </div>
+
+          {/* Values */}
+          {aboutData.values.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-xl font-semibold text-blue-700 mb-2">Our Values</h3>
+              <ul className="list-disc list-inside text-gray-700 space-y-1">
+                {aboutData.values.map((value, index) => (
+                  <li key={index}>{value}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>
