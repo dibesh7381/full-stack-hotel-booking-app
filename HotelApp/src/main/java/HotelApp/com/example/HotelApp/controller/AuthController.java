@@ -134,15 +134,43 @@ public class AuthController {
 
     // ------------------- HOME -------------------
     @GetMapping("/home")
-    public ResponseEntity<ApiResponseDTO<String>> home() {
-        return ResponseEntity.ok(new ApiResponseDTO<>(true, "Welcome to HotelApp Home!", null));
+    public ResponseEntity<ApiResponseDTO<HomeDTO>> home() {
+
+        HomeDTO homeData = new HomeDTO(
+                "Welcome to HotelApp — your trusted hotel booking companion!",
+                "Find the best hotels, book instantly, and travel with confidence.",
+                List.of(
+                        "Over 5000+ verified hotels across 50 cities",
+                        "Instant booking confirmation",
+                        "Secure payments and easy refunds",
+                        "24x7 customer support"
+                ),
+                List.of("Goa", "Manali", "Jaipur", "Shimla", "Bangalore")
+        );
+
+        return ResponseEntity.ok(new ApiResponseDTO<>(true, "Home content fetched successfully.", homeData));
     }
 
     // ------------------- ABOUT -------------------
     @GetMapping("/about")
-    public ResponseEntity<ApiResponseDTO<String>> about() {
-        return ResponseEntity.ok(new ApiResponseDTO<>(true, "HotelApp is a simple hotel booking platform.", null));
+    public ResponseEntity<ApiResponseDTO<AboutDTO>> about() {
+
+        AboutDTO aboutData = new AboutDTO(
+                "HotelApp is a modern hotel booking platform built to make your travel planning effortless. "
+                        + "From luxury resorts to budget stays, we help you discover and book the perfect place for your trip.",
+                "Providing the best hotel booking experience with simplicity and trust.",
+                "To be the most reliable platform for travelers worldwide.",
+                List.of(
+                        "Customer Satisfaction",
+                        "Transparency and Trust",
+                        "Innovation and Growth",
+                        "Commitment to Quality"
+                )
+        );
+
+        return ResponseEntity.ok(new ApiResponseDTO<>(true, "About content fetched successfully.", aboutData));
     }
+
 
     // ------------------- BECOME SELLER -------------------
     @PostMapping("/auth/become-seller")
