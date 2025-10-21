@@ -1,5 +1,5 @@
 # Stage 1: Build with Maven (Java 21)
-FROM maven:3.9.2-openjdk-21 AS build
+FROM jelastic/maven:3.9.5-openjdk-21 AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
