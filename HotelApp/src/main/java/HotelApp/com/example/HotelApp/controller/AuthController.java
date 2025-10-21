@@ -470,11 +470,6 @@ public class AuthController {
         }
     }
 
-
-
-
-
-
     // ------------------- HELPER -------------------
     private String extractTokenFromCookies(HttpServletRequest request) {
         if (request.getCookies() != null) {
