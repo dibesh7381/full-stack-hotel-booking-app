@@ -37,6 +37,36 @@ public class AuthController {
         return ResponseEntity.ok(new ApiResponseDTO<>(true, "Registration successful", user));
     }
 
+//    // ------------------- LOGIN -------------------
+//    @PostMapping("/auth/login")
+//    public ResponseEntity<ApiResponseDTO<String>> login(
+//            @Validated @RequestBody LoginRequestDTO dto,
+//            HttpServletResponse response) {
+//
+//        try {
+//            String token = authService.login(dto);
+//
+//            Cookie cookie = new Cookie("token", token);
+//            cookie.setHttpOnly(true);
+//            cookie.setPath("/");
+//            cookie.setMaxAge(7 * 24 * 60 * 60);
+//            response.addCookie(cookie);
+//
+//            return ResponseEntity.ok(
+//                    new ApiResponseDTO<>(true, "Login successful", "Token set in HttpOnly cookie")
+//            );
+//
+//        } catch (RuntimeException e) {
+//            return ResponseEntity
+//                    .status(HttpStatus.UNAUTHORIZED)
+//                    .body(new ApiResponseDTO<>(false, e.getMessage(), null));
+//        } catch (Exception e) {
+//            return ResponseEntity
+//                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(new ApiResponseDTO<>(false, "Something went wrong", null));
+//        }
+//    }
+
     // ------------------- LOGIN -------------------
     @PostMapping("/auth/login")
     public ResponseEntity<ApiResponseDTO<String>> login(
@@ -50,6 +80,8 @@ public class AuthController {
             cookie.setHttpOnly(true);
             cookie.setPath("/");
             cookie.setMaxAge(7 * 24 * 60 * 60);
+            // ✅ Local dev: Secure false, SameSite not set
+            // cookie.setSecure(false); // optional, default false
             response.addCookie(cookie);
 
             return ResponseEntity.ok(
@@ -65,6 +97,19 @@ public class AuthController {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDTO<>(false, "Something went wrong", null));
         }
+    }
+
+    // ------------------- LOGOUT -------------------
+    @PostMapping("/auth/logout")
+    public ResponseEntity<ApiResponseDTO<String>> logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("token", null);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        // ✅ Local dev: Secure false
+        // cookie.setSecure(false); // optional
+        response.addCookie(cookie);
+        return ResponseEntity.ok(new ApiResponseDTO<>(true, "Logged out successfully", null));
     }
 
     // ------------------- GET PROFILE -------------------
@@ -119,17 +164,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponseDTO<>(false, "Failed to update profile: " + e.getMessage(), null));
         }
-    }
-
-    // ------------------- LOGOUT -------------------
-    @PostMapping("/auth/logout")
-    public ResponseEntity<ApiResponseDTO<String>> logout(HttpServletResponse response) {
-        Cookie cookie = new Cookie("token", null);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
-        return ResponseEntity.ok(new ApiResponseDTO<>(true, "Logged out successfully", null));
     }
 
     // ------------------- HOME -------------------
