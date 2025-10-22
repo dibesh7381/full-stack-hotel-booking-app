@@ -544,7 +544,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+@CrossOrigin(origins = "https://full-stack-hotel-booking-app-six.vercel.app", allowCredentials = "true")
 public class AuthController {
 
     private final AuthService authService;
