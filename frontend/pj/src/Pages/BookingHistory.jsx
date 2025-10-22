@@ -10,7 +10,7 @@ const BookingHistory = () => {
   useEffect(() => {
     const fetchArchivedBookings = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/bookings/archive", {
+        const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/bookings/archive", {
           credentials: "include",
         });
         const data = await res.json();

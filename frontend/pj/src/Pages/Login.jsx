@@ -19,7 +19,7 @@ const Login = () => {
     setMessage({ text: "", type: "" }); // clear old message
 
     try {
-      const res = await fetch("http://localhost:8080/api/auth/login", {
+      const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

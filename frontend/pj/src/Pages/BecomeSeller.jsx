@@ -20,7 +20,7 @@ const BecomeSeller = () => {
   const handleBecomeSeller = async () => {
     setUpdating(true);
     try {
-      const res = await fetch("http://localhost:8080/api/auth/become-seller", {
+      const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/auth/become-seller", {
         method: "POST",
         credentials: "include",
       });

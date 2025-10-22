@@ -11,7 +11,7 @@ const Home = () => {
   useEffect(() => {
     const fetchHome = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/home", {
+        const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/home", {
           method: "GET",
         });
         const data = await res.json();

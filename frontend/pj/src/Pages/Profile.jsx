@@ -23,7 +23,7 @@ const Profile = () => {
       if (password.trim()) formData.append("password", password);
       if (imageFile) formData.append("image", imageFile);
 
-      const res = await fetch("http://localhost:8080/api/auth/profile", {
+      const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/auth/profile", {
         method: "PUT",
         credentials: "include",
         body: formData,

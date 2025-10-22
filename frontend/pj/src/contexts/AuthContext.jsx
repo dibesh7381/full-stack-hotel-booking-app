@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
   // ✅ Fetch user profile
   const fetchProfile = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/auth/profile", {
+      const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/auth/profile", {
         credentials: "include", // send cookies
       });
 
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
   // ✅ Login function
   const login = async (email, password) => {
     try {
-      const res = await fetch("http://localhost:8080/api/auth/login", {
+      const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
   // ✅ Logout function
   const logout = async () => {
     try {
-      await fetch("http://localhost:8080/api/auth/logout", {
+      await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });

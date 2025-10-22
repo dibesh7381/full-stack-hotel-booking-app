@@ -28,7 +28,7 @@ const BookingForm = () => {
   useEffect(() => {
     const fetchRoom = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/api/all-rooms`, {
+        const res = await fetch(`https://full-stack-hotel-booking-app-1.onrender.com/api/all-rooms`, {
           credentials: "include",
         });
         const data = await res.json();
@@ -60,7 +60,7 @@ const BookingForm = () => {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/api/bookings", {
+      const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

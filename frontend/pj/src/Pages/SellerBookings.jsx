@@ -12,7 +12,7 @@ const SellerBookings = () => {
   useEffect(() => {
     const fetchSellerBookings = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/seller/bookings", {
+        const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/seller/bookings", {
           credentials: "include",
         });
         const data = await res.json();

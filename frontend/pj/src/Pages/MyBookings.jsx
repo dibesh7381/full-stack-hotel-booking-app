@@ -16,7 +16,7 @@ const MyBookings = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/bookings", {
+        const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/bookings", {
           credentials: "include",
         });
         const data = await res.json();
@@ -45,7 +45,7 @@ const MyBookings = () => {
   const confirmCancelBooking = async () => {
     if (!bookingToCancel) return;
     try {
-      const res = await fetch(`http://localhost:8080/api/bookings/${bookingToCancel}`, {
+      const res = await fetch(`https://full-stack-hotel-booking-app-1.onrender.com/api/bookings/${bookingToCancel}`, {
         method: "DELETE",
         credentials: "include",
       });

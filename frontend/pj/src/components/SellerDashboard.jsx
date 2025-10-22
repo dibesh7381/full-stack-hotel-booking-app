@@ -23,7 +23,7 @@ const SellerDashboard = () => {
   // ----------------- API FUNCTIONS -----------------
   const fetchRooms = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/rooms", { credentials: "include" });
+      const res = await fetch("https://full-stack-hotel-booking-app-1.onrender.com/api/rooms", { credentials: "include" });
       const data = await res.json();
       if (data.success) setRooms(data.data);
     } catch (err) {
@@ -38,7 +38,7 @@ const SellerDashboard = () => {
       else dataForm.append(key, value);
     });
 
-    const res = await fetch(`http://localhost:8080/api/rooms${id ? `/${id}` : ""}`, {
+    const res = await fetch(`https://full-stack-hotel-booking-app-1.onrender.com/api/rooms${id ? `/${id}` : ""}`, {
       method,
       credentials: "include",
       body: dataForm,
@@ -47,7 +47,7 @@ const SellerDashboard = () => {
   };
 
   const deleteRoomAPI = async (id) => {
-    const res = await fetch(`http://localhost:8080/api/rooms/${id}`, {
+    const res = await fetch(`https://full-stack-hotel-booking-app-1.onrender.com/api/rooms/${id}`, {
       method: "DELETE",
       credentials: "include",
     });

@@ -11,7 +11,7 @@ const SellerHistory = () => {
     const fetchSellerHistory = async () => {
       try {
         const res = await fetch(
-          "http://localhost:8080/api/seller/bookings/history",
+          "https://full-stack-hotel-booking-app-1.onrender.com/api/seller/bookings/history",
           {
             credentials: "include",
           }
